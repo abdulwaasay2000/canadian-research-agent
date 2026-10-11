@@ -1,0 +1,18 @@
+# Render Blueprint: New > Blueprint > pick this repo. Free plan works for the demo.
+services:
+  - type: web
+    name: canadian-research-agent
+    runtime: docker
+    plan: free
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: CRA_MODE
+        value: research
+      - key: CRA_DATA_SOURCE
+        value: synthetic        # change to "live" after adding keys below
+      - key: SEC_USER_AGENT
+        sync: false
+      - key: FRED_API_KEY
+        sync: false
+      - key: EODHD_API_KEY
+        sync: false

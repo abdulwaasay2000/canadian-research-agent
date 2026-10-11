@@ -1,0 +1,12 @@
+# Exact versions this phase was tested with (Python 3.13, also targets 3.11/3.12).
+# Re-run `pytest` after any upgrade. Licenses: all BSD/MIT/Apache-2.0 (see docs/ARCHITECTURE.md).
+pandas==3.0.5
+numpy==2.5.3
+scipy==1.18.1
+requests==2.34.2
+duckdb==1.5.6
+pyarrow==25.0.1
+fastapi==0.143.0
+uvicorn==0.53.0
+streamlit==1.65.0
+plotly==7.1.0
