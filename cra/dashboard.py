@@ -33,7 +33,7 @@ if not settings.duckdb_path.exists():
 
 
 @st.cache_data(ttl=300)
-def load(_key: str):
+def load(cache_key: str):
     wh = Warehouse(settings.duckdb_path, read_only=True)
     try:
         return {
