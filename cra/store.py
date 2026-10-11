@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from pathlib import Path
 
 import duckdb
@@ -42,16 +43,48 @@ CREATE TABLE IF NOT EXISTS quality_issues (
 """
 
 
+# One DuckDB connection per database file per process. DuckDB refuses to open the same file
+# twice in one process with different settings (e.g. read-only + read-write), which happens in
+# Streamlit/FastAPI where many sessions share a process. Each Warehouse gets its own cursor.
+_SHARED: dict[str, duckdb.DuckDBPyConnection] = {}
+_LOCK = threading.Lock()
+
+
+def _shared_connection(path: str, read_only: bool) -> duckdb.DuckDBPyConnection:
+    key = str(Path(path).resolve())
+    with _LOCK:
+        con = _SHARED.get(key)
+        if con is None:
+            con = duckdb.connect(key, read_only=read_only)
+            _SHARED[key] = con
+        return con
+
+
+def reset_connections() -> None:
+    """Close all shared connections (tests, or before another process needs to write)."""
+    with _LOCK:
+        for con in _SHARED.values():
+            try:
+                con.close()
+            except Exception:  # noqa: BLE001
+                pass
+        _SHARED.clear()
+
+
 class Warehouse:
     def __init__(self, path: str | Path = ":memory:", read_only: bool = False) -> None:
-        if path != ":memory:":
+        if str(path) == ":memory:":
+            self.con = duckdb.connect(":memory:")
+        else:
             Path(path).parent.mkdir(parents=True, exist_ok=True)
-        self.con = duckdb.connect(str(path), read_only=read_only)
-        if not read_only:
+            self.con = _shared_connection(str(path), read_only).cursor()
+        try:
             self.con.execute(DDL)
+        except duckdb.Error:
+            pass  # read-only database that already has its tables
 
     def close(self) -> None:
-        self.con.close()
+        self.con.close()  # closes this cursor only; the shared connection stays open
 
     # ---- writes ---------------------------------------------------------------
     def upsert(self, ds: Dataset) -> int:
