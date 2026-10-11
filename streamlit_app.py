@@ -41,7 +41,7 @@ def _needs_load(path: Path) -> bool:
     if LIVE:
         age = time.time() - path.stat().st_mtime
         # Reload when data is stale, or when the stock list was changed in a newer deploy.
-        universe_changed = (ROOT / "cra" / "universe_real.csv").stat().st_mtime > path.stat().st_mtime
+        universe_changed = max(f.stat().st_mtime for f in (ROOT / "cra").glob("*.*")) > path.stat().st_mtime
         return age > REFRESH_HOURS * 3600 or universe_changed
     return False
 
