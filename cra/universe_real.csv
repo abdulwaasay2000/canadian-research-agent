@@ -1,0 +1,17 @@
+ticker,name,exchange,country,sector,industry,asset_type,currency,is_synthetic
+RY,Royal Bank of Canada,TSX,CA,Financials,Banks,stock,CAD,false
+TD,Toronto-Dominion Bank,TSX,CA,Financials,Banks,stock,CAD,false
+ENB,Enbridge Inc.,TSX,CA,Energy,Midstream,stock,CAD,false
+CNR,Canadian National Railway,TSX,CA,Industrials,Railroads,stock,CAD,false
+SHOP,Shopify Inc.,TSX,CA,Information Technology,Software,stock,CAD,false
+FTS,Fortis Inc.,TSX,CA,Utilities,Electric Utilities,stock,CAD,false
+L,Loblaw Companies,TSX,CA,Consumer Staples,Food Retail,stock,CAD,false
+XIU,iShares S&P/TSX 60 Index ETF,TSX,CA,Broad Market,Equity ETF,etf,CAD,false
+XBB,iShares Core Canadian Universe Bond ETF,TSX,CA,Fixed Income,Bond ETF,etf,CAD,false
+AAPL,Apple Inc.,NASDAQ,US,Information Technology,Hardware,stock,USD,false
+MSFT,Microsoft Corp.,NASDAQ,US,Information Technology,Software,stock,USD,false
+JPM,JPMorgan Chase & Co.,NYSE,US,Financials,Banks,stock,USD,false
+JNJ,Johnson & Johnson,NYSE,US,Health Care,Pharmaceuticals,stock,USD,false
+PG,Procter & Gamble,NYSE,US,Consumer Staples,Household Products,stock,USD,false
+NEE,NextEra Energy,NYSE,US,Utilities,Electric Utilities,stock,USD,false
+SPY,SPDR S&P 500 ETF Trust,NYSEARCA,US,Broad Market,Equity ETF,etf,USD,false

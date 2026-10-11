@@ -1,0 +1,37 @@
+{
+  "_comment": "Decision matrix rules. Every factor scores +1 (supportive), 0 (neutral), -1 (unsupportive) or null (no data). Thresholds are starting assumptions, NOT backtested; Phase 3 validates them out of sample.",
+  "version": "dm-0.1",
+  "stocks": {
+    "min_evidence": 4,
+    "pillar_pos": 0.60,
+    "pillar_neg": 0.35,
+    "momentum_pos": 0.10,
+    "momentum_neg": -0.10,
+    "risk_good_max_dd": -0.25,
+    "risk_good_max_vol": 0.25,
+    "risk_bad_max_dd": -0.50,
+    "risk_bad_max_vol": 0.45,
+    "watch_at": 3,
+    "avoid_below": 0
+  },
+  "etfs": {
+    "min_evidence": 3,
+    "momentum_pos": 0.05,
+    "momentum_neg": -0.05,
+    "sharpe_like_pos": 0.5,
+    "sharpe_like_neg": 0.0,
+    "dd_good": -0.20,
+    "dd_bad": -0.40,
+    "watch_at": 2,
+    "avoid_below": 0
+  },
+  "forex": {
+    "min_evidence": 3,
+    "momentum_3m": 0.02,
+    "rate_diff_pts": 0.5,
+    "rsi_overbought": 70,
+    "rsi_oversold": 30,
+    "directional_at": 2,
+    "vol_spike_ratio": 1.5
+  }
+}

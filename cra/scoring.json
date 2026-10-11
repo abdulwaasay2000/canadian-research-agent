@@ -1,0 +1,22 @@
+{
+  "_comment": "Preliminary research score. Weights are a starting point to be tested out-of-sample in Phase 3, not a proven model. higher=true means larger is better.",
+  "version": "prelim-0.1",
+  "min_peers": 3,
+  "min_coverage_for_label": 0.6,
+  "labels": {"watch": 65, "research_further": 45},
+  "pillars": {
+    "financial_strength": {"points": 25, "metrics": {
+      "debt_to_equity": false, "net_debt_ebitda": false, "interest_coverage": true,
+      "current_ratio": true, "fcf_conversion": true, "equity_to_assets": true}},
+    "profitability_quality": {"points": 20, "metrics": {
+      "roe": true, "roic": true, "operating_margin": true, "fcf_margin": true, "margin_volatility_5y": false}},
+    "valuation": {"points": 20, "metrics": {
+      "pe": false, "ev_ebitda": false, "p_fcf": false, "p_s": false, "p_b": false}},
+    "growth_durability": {"points": 15, "metrics": {
+      "revenue_cagr_3y": true, "revenue_cagr_5y": true, "eps_cagr_3y": true}},
+    "competitive_position": {"points": 10, "metrics": {},
+      "_comment": "Requires qualitative/industry data. Not auto-scored in Phase 1; points are unavailable, not awarded."},
+    "risk_governance": {"points": 10, "metrics": {
+      "volatility_3y": false, "max_drawdown_5y": true, "share_change_3y": false}}
+  }
+}

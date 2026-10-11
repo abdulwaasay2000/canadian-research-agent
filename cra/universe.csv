@@ -1,0 +1,23 @@
+ticker,name,exchange,country,sector,industry,asset_type,currency,is_synthetic
+ZMBK,DEMO Maple Bank Corp,TSX,CA,Financials,Banks,stock,CAD,true
+ZNLF,DEMO Northern Life Financial,TSX,CA,Financials,Insurance,stock,CAD,true
+ZPRP,DEMO Prairie Pipelines,TSX,CA,Energy,Midstream,stock,CAD,true
+ZBOE,DEMO Boreal Oil & Gas,TSX,CA,Energy,Exploration & Production,stock,CAD,true
+ZLKU,DEMO Lakeshore Utilities,TSX,CA,Utilities,Electric Utilities,stock,CAD,true
+ZCRR,DEMO Cascade Rail,TSX,CA,Industrials,Railroads,stock,CAD,true
+ZSFT,DEMO Shield Software,TSX,CA,Information Technology,Software,stock,CAD,true
+ZGRC,DEMO Granite Grocers,TSX,CA,Consumer Staples,Food Retail,stock,CAD,true
+ZKLG,DEMO Klondike Gold Mines,TSXV,CA,Materials,Gold,stock,CAD,true
+ZOKT,DEMO Okanagan Telecom,TSX,CA,Communication Services,Telecom,stock,CAD,true
+ZXIC,DEMO Canada Broad Market ETF,TSX,CA,Broad Market,Equity ETF,etf,CAD,true
+ZXBD,DEMO Canada Aggregate Bond ETF,TSX,CA,Fixed Income,Bond ETF,etf,CAD,true
+ZHUD,DEMO Hudson Regional Bank,NYSE,US,Financials,Banks,stock,USD,true
+ZCLD,DEMO Cloudline Systems,NASDAQ,US,Information Technology,Software,stock,USD,true
+ZCHP,DEMO Silicon Ridge Semis,NASDAQ,US,Information Technology,Semiconductors,stock,USD,true
+ZMED,DEMO Meridian Health,NYSE,US,Health Care,Pharmaceuticals,stock,USD,true
+ZRTL,DEMO Main Street Retail,NYSE,US,Consumer Discretionary,Retail,stock,USD,true
+ZPWR,DEMO Liberty Power & Light,NYSE,US,Utilities,Electric Utilities,stock,USD,true
+ZIND,DEMO Great Lakes Industrial,NYSE,US,Industrials,Machinery,stock,USD,true
+ZSNK,DEMO Pantry Brands,NASDAQ,US,Consumer Staples,Packaged Foods,stock,USD,true
+ZXSP,DEMO US Large Cap ETF,NYSEARCA,US,Broad Market,Equity ETF,etf,USD,true
+ZXTB,DEMO US Treasury Bond ETF,NYSEARCA,US,Fixed Income,Bond ETF,etf,USD,true
