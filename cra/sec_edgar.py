@@ -59,7 +59,7 @@ CONCEPTS: dict[str, list[tuple[str, str]]] = {
                                   ("ifrs-full", "DepreciationAndAmortisationExpense"),
                                   ("ifrs-full", "DepreciationAmortisationAndImpairmentLossReversalOfImpairmentLossRecognisedInProfitOrLoss")],
 }
-ANNUAL_FORMS = {"10-K", "10-K/A", "20-F", "20-F/A", "40-F", "40-F/A"}
+ANNUAL_FORMS = {"10-K", "10-K/A", "20-F", "20-F/A", "40-F", "40-F/A", "6-K"}
 
 
 def parse_company_facts(payload: dict, ticker: str, first_filed_only: bool = True) -> pd.DataFrame:
