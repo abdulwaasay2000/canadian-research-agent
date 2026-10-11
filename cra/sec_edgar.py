@@ -1,4 +1,4 @@
-"""SEC EDGAR XBRL client (free, no key; a descriptive User-Agent with contact email is required
+"""SEC EDGAR XBRL client (US GAAP and IFRS) (free, no key; a descriptive User-Agent with contact email is required
 by SEC fair-access rules, max 10 requests/second).
 
 Endpoints:
@@ -24,34 +24,51 @@ log = logging.getLogger(__name__)
 TICKER_MAP_URL = "https://www.sec.gov/files/company_tickers.json"
 FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
 
-# Our metric name -> ordered list of US-GAAP concepts to try (first one with data wins).
-CONCEPTS: dict[str, list[str]] = {
-    "revenue": ["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "SalesRevenueNet"],
-    "net_income": ["NetIncomeLoss"],
-    "operating_income": ["OperatingIncomeLoss"],
-    "eps_diluted": ["EarningsPerShareDiluted"],
-    "operating_cash_flow": ["NetCashProvidedByUsedInOperatingActivities"],
-    "capex": ["PaymentsToAcquirePropertyPlantAndEquipment"],
-    "total_assets": ["Assets"],
-    "total_liabilities": ["Liabilities"],
-    "shareholders_equity": ["StockholdersEquity"],
-    "current_assets": ["AssetsCurrent"],
-    "current_liabilities": ["LiabilitiesCurrent"],
-    "cash": ["CashAndCashEquivalentsAtCarryingValue"],
-    "long_term_debt": ["LongTermDebtNoncurrent", "LongTermDebt"],
-    "interest_expense": ["InterestExpense", "InterestExpenseNonoperating"],
-    "shares_diluted": ["WeightedAverageNumberOfDilutedSharesOutstanding"],
-    "depreciation_amortization": ["DepreciationDepletionAndAmortization", "DepreciationAndAmortization"],
+# Our metric name -> ordered list of (taxonomy, concept) to try. The first concept with data wins.
+# US-GAAP covers US filers and Canadian filers that report in US GAAP (e.g. CN Rail, Enbridge).
+# IFRS (ifrs-full) covers most Canadian 40-F filers, e.g. the big banks.
+CONCEPTS: dict[str, list[tuple[str, str]]] = {
+    "revenue": [("us-gaap", "Revenues"), ("us-gaap", "RevenueFromContractWithCustomerExcludingAssessedTax"),
+                ("us-gaap", "SalesRevenueNet"), ("ifrs-full", "Revenue"),
+                ("ifrs-full", "RevenueFromContractsWithCustomers")],
+    "net_income": [("us-gaap", "NetIncomeLoss"), ("ifrs-full", "ProfitLossAttributableToOwnersOfParent"),
+                   ("ifrs-full", "ProfitLoss")],
+    "operating_income": [("us-gaap", "OperatingIncomeLoss"), ("ifrs-full", "ProfitLossFromOperatingActivities")],
+    "eps_diluted": [("us-gaap", "EarningsPerShareDiluted"), ("ifrs-full", "DilutedEarningsLossPerShare")],
+    "operating_cash_flow": [("us-gaap", "NetCashProvidedByUsedInOperatingActivities"),
+                            ("ifrs-full", "CashFlowsFromUsedInOperatingActivities")],
+    "capex": [("us-gaap", "PaymentsToAcquirePropertyPlantAndEquipment"),
+              ("ifrs-full", "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"),
+              ("ifrs-full", "PurchaseOfPropertyPlantAndEquipment")],
+    "total_assets": [("us-gaap", "Assets"), ("ifrs-full", "Assets")],
+    "total_liabilities": [("us-gaap", "Liabilities"), ("ifrs-full", "Liabilities")],
+    "shareholders_equity": [("us-gaap", "StockholdersEquity"), ("ifrs-full", "EquityAttributableToOwnersOfParent"),
+                            ("ifrs-full", "Equity")],
+    "current_assets": [("us-gaap", "AssetsCurrent"), ("ifrs-full", "CurrentAssets")],
+    "current_liabilities": [("us-gaap", "LiabilitiesCurrent"), ("ifrs-full", "CurrentLiabilities")],
+    "cash": [("us-gaap", "CashAndCashEquivalentsAtCarryingValue"), ("ifrs-full", "CashAndCashEquivalents")],
+    "long_term_debt": [("us-gaap", "LongTermDebtNoncurrent"), ("us-gaap", "LongTermDebt"),
+                       ("ifrs-full", "NoncurrentPortionOfNoncurrentBorrowings"),
+                       ("ifrs-full", "LongtermBorrowings")],
+    "interest_expense": [("us-gaap", "InterestExpense"), ("us-gaap", "InterestExpenseNonoperating"),
+                         ("ifrs-full", "FinanceCosts"), ("ifrs-full", "InterestExpense")],
+    "shares_diluted": [("us-gaap", "WeightedAverageNumberOfDilutedSharesOutstanding"),
+                       ("ifrs-full", "AdjustedWeightedAverageShares")],
+    "depreciation_amortization": [("us-gaap", "DepreciationDepletionAndAmortization"),
+                                  ("us-gaap", "DepreciationAndAmortization"),
+                                  ("ifrs-full", "DepreciationAndAmortisationExpense"),
+                                  ("ifrs-full", "DepreciationAmortisationAndImpairmentLossReversalOfImpairmentLossRecognisedInProfitOrLoss")],
 }
-ANNUAL_FORMS = {"10-K", "10-K/A", "20-F", "40-F"}
+ANNUAL_FORMS = {"10-K", "10-K/A", "20-F", "20-F/A", "40-F", "40-F/A"}
 
 
 def parse_company_facts(payload: dict, ticker: str, first_filed_only: bool = True) -> pd.DataFrame:
-    facts = (payload.get("facts") or {}).get("us-gaap") or {}
+    facts = payload.get("facts") or {}
     rows = []
     for metric, concepts in CONCEPTS.items():
-        for concept in concepts:
-            node = facts.get(concept)
+        found = False
+        for taxonomy, concept in concepts:
+            node = (facts.get(taxonomy) or {}).get(concept)
             if not node:
                 continue
             for unit, items in (node.get("units") or {}).items():
@@ -70,7 +87,8 @@ def parse_company_facts(payload: dict, ticker: str, first_filed_only: bool = Tru
                         "value": float(it["val"]), "unit": unit,
                         "available_date": pd.Timestamp(it["filed"]), "form": it["form"],
                     })
-            if any(r["metric"] == metric for r in rows):
+                    found = True
+            if found:
                 break  # first concept with data wins
     df = pd.DataFrame(rows, columns=["ticker", "metric", "period_end", "fiscal_year", "value",
                                      "unit", "available_date", "form"])
@@ -101,10 +119,12 @@ class SecEdgarClient:
         except KeyError as exc:
             raise DataSourceError(f"Ticker {ticker} not found in SEC ticker map") from exc
 
-    def fundamentals(self, ticker: str) -> Dataset:
+    def fundamentals(self, ticker: str, label: str | None = None) -> Dataset:
+        """ticker: the symbol SEC knows (US listing). label: the ticker to store rows under
+        (e.g. TSX symbol CNR for SEC ticker CNI)."""
         url = FACTS_URL.format(cik=self.cik_for(ticker))
         resp = self.http.get_json(url)
-        df = parse_company_facts(resp.payload, ticker.upper())
+        df = parse_company_facts(resp.payload, (label or ticker).upper())
         return Dataset("fundamentals", df, Provenance(
             source="sec_edgar_xbrl", url=url,
             notes="As-first-reported annual values; available_date = SEC filing date."))

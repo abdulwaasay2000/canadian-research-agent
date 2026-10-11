@@ -46,6 +46,42 @@ def _cagr(series: pd.Series, years: int) -> float:
     return float((end / start) ** (1 / years) - 1)
 
 
+MONEY_CCYS = {"USD", "CAD"}
+
+
+def statement_currency(unit: str) -> str | None:
+    """'CAD' -> 'CAD', 'USD/shares' -> 'USD', 'shares' -> None."""
+    ccy = str(unit).split("/")[0].upper()
+    return ccy if ccy in MONEY_CCYS else None
+
+
+def align_currency(fund: pd.DataFrame, target_ccy: str, fx_long: pd.DataFrame) -> pd.DataFrame:
+    """Convert USD<->CAD statement values into the listing currency, so price x shares and the
+    statements are in the same currency (e.g. Shopify reports in USD but trades in CAD on TSX).
+    Uses the Bank of Canada USD/CAD rate on or before each period end. Rows that can't be
+    converted (no rate) are dropped rather than mixed."""
+    if fund.empty or target_ccy not in MONEY_CCYS:
+        return fund
+    df = fund.copy()
+    ccy = df["unit"].map(statement_currency)
+    needs = ccy.notna() & (ccy != target_ccy)
+    if not needs.any():
+        return df
+    usd = fx_long[fx_long["series"] == "FXUSDCAD"][["date", "value"]].sort_values("date") if not fx_long.empty else None
+    if usd is None or usd.empty:
+        return df[~needs]
+    usd = usd.assign(date=pd.to_datetime(usd["date"]).astype("datetime64[ns]"))
+    sub = df[needs].copy()
+    sub["_d"] = pd.to_datetime(sub["period_end"]).astype("datetime64[ns]")
+    sub = pd.merge_asof(sub.sort_values("_d"), usd.rename(columns={"date": "_d", "value": "_r"}),
+                        on="_d", direction="backward")
+    from_ccy = sub["unit"].map(statement_currency)
+    sub["value"] = np.where(from_ccy == "USD", sub["value"] * sub["_r"], sub["value"] / sub["_r"])
+    sub["unit"] = sub["unit"].str.replace(r"^(USD|CAD)", target_ccy, regex=True)
+    sub = sub.dropna(subset=["_r"]).drop(columns=["_d", "_r"])
+    return pd.concat([df[~needs], sub], ignore_index=True)
+
+
 def company_metrics(fund: pd.DataFrame, prices: pd.DataFrame, sector: str, as_of: pd.Timestamp) -> dict:
     """fund: PIT long-format fundamentals for one ticker. prices: that ticker's price history."""
     as_of = pd.Timestamp(as_of)

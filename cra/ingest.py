@@ -17,6 +17,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
+import pandas as pd
+
 from cra.config import Settings, get_settings
 from cra.http import DataSourceError, HttpClient
 from cra.models import Dataset
@@ -50,6 +52,17 @@ def _client(settings: Settings, name: str, headers: dict | None = None) -> HttpC
     return HttpClient(name, settings.cache_dir, min_interval_s=settings.rate_limits.get(name, 0.5),
                       timeout_s=settings.http_timeout_s, max_retries=settings.http_max_retries,
                       cache_ttl_s=settings.http_cache_ttl_s, headers=headers)
+
+
+def _sec_ticker(row) -> str | None:
+    """SEC lookup symbol: the `sec_ticker` column if the universe has one (lets TSX names that
+    also file with the SEC, like CNR -> CNI, get free statements); otherwise US tickers only."""
+    val = getattr(row, "sec_ticker", None)
+    if isinstance(val, str) and val.strip():
+        return val.strip()
+    if val is None or (isinstance(val, float) and pd.isna(val)):
+        return row.ticker if row.country == "US" else None
+    return None
 
 
 def ingest_synthetic(wh: Warehouse, universe_path: Path = DEFAULT_UNIVERSE) -> None:
@@ -96,8 +109,12 @@ def ingest_live(wh: Warehouse, settings: Settings, universe_path: Path, start: d
     if settings.sec_user_agent:
         try:
             sec = SecEdgarClient(_client(settings, "sec"), settings.sec_user_agent)
-            for r in real[real["country"] == "US"].itertuples():
-                attempt(f"sec:{r.ticker}", "fundamentals", lambda r=r: sec.fundamentals(r.ticker))
+            for r in real[real["asset_type"] == "stock"].itertuples():  # ETFs have no XBRL filings
+                sec_ticker = _sec_ticker(r)
+                if not sec_ticker:
+                    continue  # not an SEC filer (e.g. TSX-only company)
+                attempt(f"sec:{r.ticker}", "fundamentals",
+                        lambda r=r, t=sec_ticker: sec.fundamentals(t, label=r.ticker))
         except DataSourceError as exc:
             status["sec"] = f"error: {exc}"
     else:

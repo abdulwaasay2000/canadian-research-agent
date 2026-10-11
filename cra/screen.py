@@ -6,7 +6,7 @@ import pandas as pd
 
 from cra.indicators import annualized_vol, cagr, max_drawdown
 from cra.pairs import usd_to_cad
-from cra.metrics import company_metrics
+from cra.metrics import align_currency, company_metrics
 from cra.scoring import load_config, score_universe
 from cra.store import Warehouse
 
@@ -25,9 +25,11 @@ def run_stock_screen(wh: Warehouse, market: str, as_of: str | pd.Timestamp | Non
         as_of = pd.Timestamp(last) if pd.notna(last) else pd.Timestamp.today().normalize()
     as_of = pd.Timestamp(as_of)
     fund_all = wh.fundamentals(as_of=as_of)
+    fx_all = wh.fx(["FXUSDCAD"])
     rows = []
     for r in uni.itertuples():
-        m = company_metrics(fund_all[fund_all["ticker"] == r.ticker], wh.prices(r.ticker), r.sector, as_of)
+        fund = align_currency(fund_all[fund_all["ticker"] == r.ticker], r.currency, fx_all)
+        m = company_metrics(fund, wh.prices(r.ticker), r.sector, as_of)
         src = wh.query("SELECT any_value(source) s, bool_or(is_synthetic) syn FROM prices WHERE ticker=?", [r.ticker])
         m.update({"ticker": r.ticker, "name": r.name, "exchange": r.exchange, "sector": r.sector,
                   "currency": r.currency, "price_source": src["s"].iloc[0],
