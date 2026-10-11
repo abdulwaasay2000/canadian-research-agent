@@ -1,0 +1,14 @@
+Upload to GitHub in 2 steps (no folders needed)
+
+STEP 1 - top-level files
+  Open: https://github.com/abdulwaasay2000/canadian-research-agent/upload/main
+  Choose ALL the files sitting directly in this folder (not the folders).
+  Commit changes. (Same-named files are replaced, which is what we want.)
+
+STEP 2 - the app
+  Open: https://github.com/abdulwaasay2000/canadian-research-agent/upload/main/cra
+  Open the "cra" folder, select ALL files inside it (Ctrl+A), upload, Commit changes.
+
+Optional:
+  tests -> https://github.com/abdulwaasay2000/canadian-research-agent/upload/main/tests
+  docs  -> https://github.com/abdulwaasay2000/canadian-research-agent/upload/main/docs

@@ -36,7 +36,7 @@ docker run -p 8501:8501 cra
 
 Use the `research-desk-static-site.zip` folder, or build a fresh one with:
 ```
-python -m cra.pipeline.build_webapp --out site/index.html
+python -m cra.build_webapp --out site/index.html
 ```
 Then drag the folder onto app.netlify.com/drop, or upload it to GitHub Pages, Vercel or Cloudflare Pages.
 

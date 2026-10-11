@@ -10,24 +10,24 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT))
 os.environ.setdefault("CRA_HOME", str(ROOT))
 
 from cra.config import get_settings  # noqa: E402
-from cra.storage.store import Warehouse  # noqa: E402
+from cra.store import Warehouse  # noqa: E402
 
 settings = get_settings()
 if not settings.duckdb_path.exists():
-    from cra.pipeline.ingest import ingest_live, ingest_synthetic
+    from cra.ingest import ingest_live, ingest_synthetic
 
     wh = Warehouse(settings.duckdb_path)
     try:
         if os.environ.get("CRA_DATA_SOURCE", "synthetic") == "live":
             from datetime import date
-            ingest_live(wh, settings, ROOT / "config" / "universe_real.csv", date(2015, 1, 1))
+            ingest_live(wh, settings, ROOT / "cra" / "universe_real.csv", date(2015, 1, 1))
         else:
             ingest_synthetic(wh)
     finally:
         wh.close()
 
-runpy.run_path(str(ROOT / "src" / "cra" / "dashboard" / "app.py"), run_name="__main__")
+runpy.run_path(str(ROOT / "cra" / "dashboard.py"), run_name="__main__")
