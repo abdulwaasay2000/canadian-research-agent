@@ -19,8 +19,11 @@ def run_stock_screen(wh: Warehouse, market: str, as_of: str | pd.Timestamp | Non
     uni = uni[(uni["exchange"].isin(MARKETS[market])) & (uni["asset_type"] == "stock")]
     if uni.empty:
         return pd.DataFrame()
-    as_of = pd.Timestamp(as_of) if as_of is not None else pd.Timestamp(
-        wh.query("SELECT max(date) d FROM prices")["d"].iloc[0])
+    if as_of is None:
+        last = wh.query("SELECT max(date) d FROM prices")["d"].iloc[0]
+        # No prices loaded yet (e.g. live mode without a price feed): screen fundamentals as of today.
+        as_of = pd.Timestamp(last) if pd.notna(last) else pd.Timestamp.today().normalize()
+    as_of = pd.Timestamp(as_of)
     fund_all = wh.fundamentals(as_of=as_of)
     rows = []
     for r in uni.itertuples():
@@ -37,8 +40,12 @@ def run_stock_screen(wh: Warehouse, market: str, as_of: str | pd.Timestamp | Non
         if not fx.empty:
             tmp = scored[["ticker", "price_date", "price"]].copy()
             tmp["price_date"] = pd.to_datetime(tmp["price_date"])
-            conv = usd_to_cad(tmp, fx, ["price"], date_col="price_date")
-            scored = scored.merge(conv[["ticker", "price_cad", "usdcad"]], on="ticker", how="left")
+            tmp = tmp.dropna(subset=["price_date"])  # stocks with no price can't be converted
+            if not tmp.empty:
+                conv = usd_to_cad(tmp, fx, ["price"], date_col="price_date")
+                scored = scored.merge(conv[["ticker", "price_cad", "usdcad"]], on="ticker", how="left")
+            else:
+                scored["price_cad"], scored["usdcad"] = float("nan"), float("nan")
     return scored
 
 

@@ -59,14 +59,14 @@ def asset_trackers(wh) -> pd.DataFrame:
     rows = []
     for r in uni.itertuples():
         px = wh.prices(r.ticker)
+        base = {"ticker": r.ticker, "name": r.name, "exchange": r.exchange, "country": r.country,
+                "sector": r.sector, "asset_type": r.asset_type, "currency": r.currency}
         if px.empty:
-            rows.append({"ticker": r.ticker, "name": r.name, "status": "no data"})
+            rows.append({**base, "status": "no data"})
             continue
         s = px.set_index(pd.to_datetime(px["date"]))["adj_close"]
-        rows.append({"ticker": r.ticker, "name": r.name, "exchange": r.exchange, "country": r.country,
-                     "sector": r.sector, "asset_type": r.asset_type, "currency": r.currency, "status": "ok",
-                     "source": px["source"].iloc[-1], "is_synthetic": bool(px["is_synthetic"].iloc[-1]),
-                     **series_stats(s)})
+        rows.append({**base, "status": "ok", "source": px["source"].iloc[-1],
+                     "is_synthetic": bool(px["is_synthetic"].iloc[-1]), **series_stats(s)})
     return pd.DataFrame(rows)
 
 

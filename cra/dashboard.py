@@ -58,6 +58,14 @@ page = st.sidebar.radio("Page", ["Decision Matrix", "Trackers", "Overview", "Can
 if data["synthetic"]:
     st.warning("**SYNTHETIC DEMO DATA IN USE.** Some or all numbers on this page are generated for "
                "demonstration and describe fictional companies. Do not use them for decisions.")
+_fresh = data["freshness"]
+_missing = [d for d in ("prices", "fx", "fundamentals") if _fresh.empty or d not in set(_fresh["dataset"])]
+if _missing:
+    st.info("No data loaded yet for: **" + ", ".join(_missing) + "**. "
+            + ("Stock and ETF prices need a licensed price feed (EODHD_API_KEY). " if "prices" in _missing else "")
+            + ("Exchange rates come from the Bank of Canada; check Data Quality for connection errors. " if "fx" in _missing else "")
+            + ("US fundamentals need SEC_USER_AGENT. " if "fundamentals" in _missing else "")
+            + "See the Data Quality page for details.")
 st.caption("Research output only. Not investment, tax or legal advice. Labels are research triage, not trade signals.")
 
 
@@ -210,6 +218,9 @@ elif page == "Forex Research":
     st.info("Pairs are built from Bank of Canada daily indicative rates (CAD crosses direct, others computed). "
             "They are not tradable quotes and include no bid/ask spread. Trend state is descriptive, not a forecast.")
     pair = st.selectbox("Pair", list(PAIRS))
+    if data["fx"].empty:
+        st.warning("No exchange-rate data loaded yet.")
+        st.stop()
     h = pair_history(data["fx"], pair).tail(750)
     fig = go.Figure()
     for c, w in [("close", 2), ("sma_20", 1), ("sma_50", 1), ("sma_200", 1)]:

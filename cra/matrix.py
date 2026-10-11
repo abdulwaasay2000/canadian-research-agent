@@ -191,6 +191,8 @@ def fx_matrix(fx_long: pd.DataFrame, macro: pd.DataFrame | None = None, cfg: dic
     rows = []
     for pair in wide.columns:
         s = wide[pair].dropna()
+        if len(s) < 2:
+            continue  # no data for this pair yet
         t, tstate = trend_factor(s)
         chg3 = float(s.iloc[-1] / s.iloc[-64] - 1) if len(s) > 64 else np.nan
         hist = ind.macd(s)["hist"].iloc[-1] if len(s) > 35 else np.nan
